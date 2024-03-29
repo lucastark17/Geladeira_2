@@ -17,10 +17,10 @@ export default function App() {
 
   const handleBarCodeScanned = ({ data }) => {
     setScannedData(data);
-    Navigation.navigate(data!=null?`${data}`:"");
+    Navigation.navigate(data != null ? `${data}` : "");
     setScannedData(null);
-
   };
+
 
   if (hasPermission === null) {
     return <Text>Solicitando permissão para acessar a câmera...</Text>;
@@ -35,7 +35,6 @@ export default function App() {
         style={styles.camera}
         type={Camera.Constants.Type.back}
         onBarCodeScanned={scannedData ? undefined : handleBarCodeScanned}
-        
       />
     </View>
   );
