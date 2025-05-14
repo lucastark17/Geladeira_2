@@ -29,6 +29,7 @@ export default function Card_Prod({ preco, descriacao, imgSrc }) {
 const styles = StyleSheet.create({
     container: {
         justifyContent: 'center',
+        marginEnd: 10
     },
     card: {
         backgroundColor: '#fff',
@@ -37,7 +38,9 @@ const styles = StyleSheet.create({
         borderWidth:1,
         borderColor:'#afb5ae',
         justifyContent:'center',
-        alignItems:'center'
+        alignItems: 'center',
+        height: 100,
+        width: 100,
     },
     infos: {
         marginTop: 10,

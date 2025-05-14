@@ -1,63 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Button } from 'react-native';
-import { Camera } from 'expo-camera';
-import { useNavigation } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useState } from 'react';
+import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function App() {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [scannedData, setScannedData] = useState(null);
-  const Navigation = useNavigation();
+    const [facing, setFacing] = useState('back');
+    const [permission, requestPermission] = useCameraPermissions();
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
+    if (!permission) {
+        // Camera permissions are still loading.
+        return <View />;
+    }
 
-  const handleBarCodeScanned = ({ data }) => {
-    setScannedData(data);
-    Navigation.navigate(data != null ? `${data}` : "");
-    setScannedData(null);
-  };
+    if (!permission.granted) {
+        // Camera permissions are not granted yet.
+        return (
+            <View style={styles.container}>
+                <Text style={styles.message}>We need your permission to show the camera</Text>
+                <Button onPress={requestPermission} title="grant permission" />
+            </View>
+        );
+    }
 
-
-  if (hasPermission === null) {
-    return <Text>Solicitando permissão para acessar a câmera...</Text>;
-  }
-  if (hasPermission === false) {
-    return <Text>Acesso à câmera negado.</Text>;
-  }
-
-  return (
-    <View style={styles.container}>
-      <Camera
-        style={styles.camera}
-        type={Camera.Constants.Type.back}
-        onBarCodeScanned={scannedData ? undefined : handleBarCodeScanned}
-      />
-    </View>
-  );
+    return (
+        <View style={styles.container}>
+            <CameraView style={styles.camera} facing={facing} barcodeScannerSettings={{
+                barcodeTypes: ["qr"],
+            }}>
+            </CameraView>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  scannedData: {
-    marginTop: 20,
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    message: {
+        textAlign: 'center',
+        paddingBottom: 10,
+    },
+    camera: {
+        flex: 1,
+    },
+    buttonContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: 'transparent',
+        margin: 64,
+    },
+    button: {
+        flex: 1,
+        alignSelf: 'flex-end',
+        alignItems: 'center',
+    },
+    text: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+
 });
