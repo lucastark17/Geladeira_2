@@ -1,63 +1,101 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useState } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useRef, useCallback } from "react";
+import { View, Text, Button, StyleSheet, Alert, TouchableOpacity } from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from '@react-navigation/native';
 
-export default function App() {
-    const [facing, setFacing] = useState('back');
+const QRScanner = () => {
     const [permission, requestPermission] = useCameraPermissions();
+    const [facing, setFacing] = useState("back");
+    const lockQrRead = useRef(false);
+    const [isFocused, setIsFocused] = useState(false);
+    const Navigation = useNavigation();
 
-    if (!permission) {
-        // Camera permissions are still loading.
-        return <View />;
-    }
+    useFocusEffect(
+        useCallback(() => {
+            setIsFocused(true);
+            lockQrRead.current = false;
+            return () => {
+                setIsFocused(false);
+            };
+        }, [])
+    );
+
+    const handleScan = ({ data }) => {
+        Alert.alert("Código Escaneado", data);
+        Navigation.navigate("Produtos");
+    };
+
+    if (!permission) return <View style={styles.container} />;
 
     if (!permission.granted) {
-        // Camera permissions are not granted yet.
         return (
             <View style={styles.container}>
-                <Text style={styles.message}>We need your permission to show the camera</Text>
-                <Button onPress={requestPermission} title="grant permission" />
+                <Text style={styles.message}>Precisamos da sua permissão para usar a câmera</Text>
+                <Button title="Permitir" onPress={requestPermission} />
             </View>
         );
     }
 
     return (
         <View style={styles.container}>
-            <CameraView style={styles.camera} facing={facing} barcodeScannerSettings={{
-                barcodeTypes: ["qr"],
-            }}>
-            </CameraView>
+            {isFocused && (
+                <CameraView
+                    style={styles.camera}
+                    facing={facing}
+                    barcodeScannerSettings={{
+                        barcodeTypes: ["qr", "code128", "code39", "ean13", "ean8", "upc_a", "upc_e"],
+                    }}
+                    onBarcodeScanned={({ data }) => {
+                        if (!lockQrRead.current) {
+                            lockQrRead.current = true;
+                            handleScan({ data });
+                            setTimeout(() => {
+                                lockQrRead.current = false;
+                            }, 1500);
+                        }
+                    }}
+                >
+                    <View style={styles.overlay}>
+                        <View style={styles.scanArea} />
+                    </View>
+                </CameraView>
+            )}
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
-    container: {
+    container: { flex: 1 },
+    message: { textAlign: "center", marginTop: 20 },
+    camera: { flex: 1 },
+    overlay: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
-    message: {
-        textAlign: 'center',
-        paddingBottom: 10,
-    },
-    camera: {
-        flex: 1,
+    scanArea: {
+        width: 250,
+        height: 250,
+        borderWidth: 2,
+        borderColor: "white",
+        borderRadius: 10,
     },
     buttonContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: 'transparent',
-        margin: 64,
+        position: "absolute",
+        bottom: 40,
+        alignSelf: "center",
     },
     button: {
-        flex: 1,
-        alignSelf: 'flex-end',
-        alignItems: 'center',
+        backgroundColor: "#000",
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 8,
     },
-    text: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
+    buttonText: {
+        color: "#fff",
+        fontSize: 16,
     },
-
 });
+
+export default QRScanner;
